@@ -1,0 +1,70 @@
+---
+title: "TradeDeadline_Effect"
+format: html
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(rvest)
+```
+
+
+```{r}
+all_midseason_standings <- tibble()
+
+for (year in 1971:2023) {
+  Sys.sleep(4)
+  month = 2
+  day = 1
+  if(year == 1999){
+    month = 3
+    day = 11
+  }
+  
+standings_url <- sprintf("https://www.basketball-reference.com/friv/standings.fcgi?month=%s&day=%s&year=%s&lg_id=NBA&utm_source=direct&utm_medium=Share&utm_campaign=ShareTool", month, day, year)
+
+
+
+standings <- read_html(standings_url) |> 
+  html_nodes("table") |>
+  html_table() 
+
+standings_tidy <- 
+  bind_rows(standings[[1]],standings[[2]]) |> 
+  unite("Conference",
+        c(`Western Conference`,`Eastern Conference`), 
+        na.rm = TRUE) |> 
+  mutate(W = as.numeric(W)) |> 
+  drop_na(W) |> 
+  type_convert(na = c("", "NA","—"))
+
+standings_tidy$Season <- year
+
+all_midseason_standings <- bind_rows(all_midseason_standings, standings_tidy)
+}
+
+```
+
+
+
+
+
+
+```{r}
+all_midseason_standings <- all_midseason_standings |> rename(Team = Conference)
+
+
+# save the results
+# write_csv(x = all_midseason_standings,
+#          file = "midseason_standings_1971-2023.csv"
+#          )
+
+
+
+
+
+```
+
+
